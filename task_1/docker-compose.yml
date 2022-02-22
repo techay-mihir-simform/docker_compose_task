@@ -1,0 +1,55 @@
+#Version of docker-compose file
+version : '3'
+services:
+
+ #Create mariadb container
+ mariadb:
+   image: mariadb
+   #Use mysql volume for persistence database .
+   volumes:
+     - mysql:/var/lib/mysql
+  # Environment variable use for run mariadb container
+   environment:
+     MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+     MYSQL_DATABASE: ${MYSQL_DATABASE}
+     MYSQL_USER: ${MYSQL_USER}
+     MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+   restart: always
+ #Create wordpress container  
+
+ wordpress:
+   image: wordpress:php7.3-fpm-alpine
+   #Mount code on host 
+   volumes:
+     - ./data/html:/var/www/html
+   environment:
+     WORDPRESS_DB_HOST: ${WORDPRESS_DB_HOST}
+     MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+     WORDPRESS_DB_NAME: ${WORDPRESS_DB_NAME}
+     WORDPRESS_DB_USER: ${WORDPRESS_DB_USER}
+     WORDPRESS_DB_PASSWORD: ${WORDPRESS_DB_PASSWORD}
+     WORDPRESS_TABLE_PREFIX: ${WORDPRESS_TABLE_PREFIX}
+     # - WORDPRESS_DEBUG=1
+    #Here wordpress service is communicate with mariadb 
+   links:
+     - mariadb
+   #Wordpress is depends on mariadb container 
+   depends_on:
+     - mariadb
+   restart: always 
+
+ #Create nginx container 
+ nginx:
+   image: nginx:alpine
+   volumes:
+     - ./nginx:/etc/nginx/conf.d
+     - ./data/html:/var/www/html
+   #Port maping to 8084 , so we can access by host machine .
+   ports:
+     - 8084:80
+   links:
+     - wordpress
+
+#Create volumes      
+volumes:
+ mysql:
